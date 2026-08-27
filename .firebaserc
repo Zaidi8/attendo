@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "attendo-dev",
+    "dev": "attendo-dev",
+    "production": "attendo-production"
+  }
+}

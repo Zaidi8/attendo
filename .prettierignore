@@ -1,0 +1,16 @@
+node_modules/
+.expo/
+dist/
+web-build/
+coverage/
+ios/
+android/
+package-lock.json
+
+# Local tooling state
+.claude/
+
+# Approved engineering docs — authored content, not reformatted
+requirements.md
+design.md
+development-plan.md
