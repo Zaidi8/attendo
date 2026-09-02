@@ -21,6 +21,12 @@ const colors = {
   absent: '#eb5757', // attendance: absent
   warning: '#f2994a',
   info: '#2f80ed',
+  // Stitch "Academic Precision" tonal containers (auth + surfaces)
+  'primary-fixed': '#d2e4fb',
+  'secondary-fixed': '#d4e3ff',
+  'on-secondary': '#ffffff',
+  'on-primary': '#ffffff',
+  'surface-container-low': '#f2f4f6',
 };
 
 /** Corner radii (design.md: 8px small, 10–14px primary). */

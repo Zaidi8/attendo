@@ -9,36 +9,46 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.attendo.app",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.attendo.app",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#4a90e2",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 128
         }
       ],
-      "@react-native-firebase/app",
+      [
+        "@react-native-firebase/app",
+        {
+          "ios": {
+            "disableSPM": true
+          }
+        }
+      ],
       "@react-native-firebase/auth",
+      "expo-dev-client",
+      "expo-updates",
       [
         "expo-build-properties",
         {
@@ -51,6 +61,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "62f5f61a-0502-4cc9-abb2-5a5c92f6ade4"
+      }
+    },
+    "owner": "zaidi8",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/62f5f61a-0502-4cc9-abb2-5a5c92f6ade4"
     }
   }
 }

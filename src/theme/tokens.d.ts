@@ -13,6 +13,11 @@ export const colors: {
   absent: string;
   warning: string;
   info: string;
+  'primary-fixed': string;
+  'secondary-fixed': string;
+  'on-secondary': string;
+  'on-primary': string;
+  'surface-container-low': string;
 };
 
 export const borderRadius: Record<string, string>;

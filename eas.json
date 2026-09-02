@@ -1,17 +1,27 @@
 {
   "cli": {
+    "version": "23.2.0",
     "appVersionSource": "remote"
   },
   "build": {
     "development": {
+      "ios": {
+        "simulator": true
+      },
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development",
+      "environment": "development"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "preview",
+      "environment": "preview"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "channel": "production",
+      "environment": "production"
     }
   },
   "submit": {
