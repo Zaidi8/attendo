@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, Text } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 
 export interface PrimaryButtonProps {
   /** Visible button text and accessible name. */
@@ -26,13 +26,14 @@ export function PrimaryButton({
   const isDisabled = disabled || loading;
 
   return (
-    <Pressable
+    <TouchableOpacity
       onPress={onPress}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
+      activeOpacity={0.7}
       testID={testID}
       className={`min-h-[52px] items-center justify-center rounded-[10px] bg-secondary-deep px-4 py-3.5 ${
         isDisabled ? 'opacity-60' : ''
@@ -43,6 +44,6 @@ export function PrimaryButton({
       ) : (
         <Text className="text-body font-semibold text-surface">{label}</Text>
       )}
-    </Pressable>
+    </TouchableOpacity>
   );
 }

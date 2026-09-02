@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FormTextInput } from '@/components/ui/FormTextInput';
@@ -124,15 +124,18 @@ export default function ForgotPasswordScreen() {
             )}
 
             <View className="mt-6 border-t border-border pt-5">
-              <Text
+              <TouchableOpacity
                 onPress={() => router.back()}
                 accessibilityRole="link"
                 accessibilityLabel="Back to Login"
-                className="flex-row items-center justify-center gap-1 text-center font-semibold text-secondary"
+                activeOpacity={0.6}
+                hitSlop={8}
                 testID="forgot-back"
+                className="flex-row items-center justify-center gap-1"
               >
-                <AppIcon name="arrow_back" size={16} color="#4a90e2" /> Back to Login
-              </Text>
+                <AppIcon name="arrow_back" size={16} color="#4a90e2" />
+                <Text className="text-center font-semibold text-secondary">Back to Login</Text>
+              </TouchableOpacity>
             </View>
           </View>
 

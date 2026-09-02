@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FormTextInput } from '@/components/ui/FormTextInput';
@@ -117,15 +117,16 @@ export default function LoginScreen() {
               />
 
               <View className="mt-1 items-end">
-                <Pressable
+                <TouchableOpacity
                   onPress={() => router.push('/forgot-password')}
                   accessibilityRole="link"
                   accessibilityLabel="Forgot password?"
+                  activeOpacity={0.6}
                   hitSlop={8}
                   testID="forgot-password-link"
                 >
                   <Text className="py-2 text-caption text-secondary">Forgot password?</Text>
-                </Pressable>
+                </TouchableOpacity>
               </View>
 
               <View className="pt-1">
@@ -141,17 +142,18 @@ export default function LoginScreen() {
         </ScrollView>
 
         <View className="border-t border-border bg-surface p-4">
-          <Text className="text-center text-body-sm text-muted">
-            Don’t have an account?{' '}
-            <Text
-              onPress={() => router.push('/signup')}
-              accessibilityRole="link"
-              accessibilityLabel="Sign Up"
-              className="font-semibold text-secondary"
-            >
-              Sign Up
+          <TouchableOpacity
+            onPress={() => router.push('/signup')}
+            accessibilityRole="link"
+            accessibilityLabel="Sign Up"
+            activeOpacity={0.6}
+            hitSlop={8}
+            className="items-center"
+          >
+            <Text className="text-center text-body-sm text-muted">
+              Don’t have an account? <Text className="font-semibold text-secondary">Sign Up</Text>
             </Text>
-          </Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

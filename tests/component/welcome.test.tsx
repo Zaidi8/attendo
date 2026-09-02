@@ -27,10 +27,10 @@ describe('WelcomeScreen', () => {
     expect(screen.getByRole('link', { name: 'Already have an account? Log in' })).toBeOnTheScreen();
   });
 
-  it('routes to login from Get Started', async () => {
+  it('routes to signup from Get Started', async () => {
     await render(<WelcomeScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Get Started' }));
-    expect(mockPush).toHaveBeenCalledWith('/login');
+    expect(mockPush).toHaveBeenCalledWith('/signup');
   });
 
   it('routes to login from the Log in link', async () => {

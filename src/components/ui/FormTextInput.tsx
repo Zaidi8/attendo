@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View, type TextInputProps } from 'react-native';
 
 import { AppIcon, type AppIconName } from './AppIcon';
 
@@ -58,16 +58,17 @@ export function FormTextInput({
           </View>
         ) : null}
         {secure && (
-          <Pressable
+          <TouchableOpacity
             onPress={() => setHidden((value) => !value)}
             accessibilityRole="button"
             accessibilityLabel={hidden ? 'Show password' : 'Hide password'}
             accessibilityHint="Toggles the password visibility"
+            activeOpacity={0.5}
             className="absolute right-0 top-0 h-full justify-center px-3"
             hitSlop={8}
           >
             <AppIcon name={hidden ? 'visibility' : 'visibility_off'} size={20} color="#667085" />
-          </Pressable>
+          </TouchableOpacity>
         )}
       </View>
       {error ? (

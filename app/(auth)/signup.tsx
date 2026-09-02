@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FormTextInput } from '@/components/ui/FormTextInput';
@@ -164,18 +164,18 @@ export default function SignupScreen() {
               </View>
             </View>
 
-            <View className="mt-6 text-center">
-              <Text className="text-center text-body-sm text-muted">
-                Already have an account?{' '}
-                <Text
-                  onPress={() => router.replace('/login')}
-                  accessibilityRole="link"
-                  accessibilityLabel="Log in"
-                  className="font-semibold text-secondary"
-                >
-                  Log in
+            <View className="mt-6 items-center">
+              <TouchableOpacity
+                onPress={() => router.replace('/login')}
+                accessibilityRole="link"
+                accessibilityLabel="Log in"
+                activeOpacity={0.6}
+                hitSlop={8}
+              >
+                <Text className="text-center text-body-sm text-muted">
+                  Already have an account? <Text className="font-semibold text-secondary">Log in</Text>
                 </Text>
-              </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>

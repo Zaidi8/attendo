@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/features/auth/useAuth';
@@ -22,15 +22,16 @@ export default function AppIndex() {
           Welcome{user?.displayName ? `, ${user.displayName}` : ''}
         </Text>
         <Text className="mt-1 text-body-sm text-muted">Dashboard arrives in a later sprint.</Text>
-        <Pressable
+        <TouchableOpacity
           onPress={onSignOut}
           accessibilityRole="button"
           accessibilityLabel="Log out"
+          activeOpacity={0.6}
           className="mt-6 rounded-lg border border-border px-5 py-3"
           testID="logout-button"
         >
           <Text className="text-body font-semibold text-foreground">Log out</Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon } from '@/components/ui/AppIcon';
@@ -66,10 +66,11 @@ export default function WelcomeScreen() {
           />
         </View>
 
-        <Pressable
+        <TouchableOpacity
           onPress={() => router.push('/login')}
           accessibilityRole="link"
           accessibilityLabel="Already have an account? Log in"
+          activeOpacity={0.6}
           hitSlop={8}
           className="mt-6 items-center"
           testID="welcome-login-link"
@@ -77,7 +78,7 @@ export default function WelcomeScreen() {
           <Text className="text-body-sm text-muted">
             Already have account? <Text className="font-semibold text-secondary">Log in</Text>
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
     </View>
   );
