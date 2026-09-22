@@ -2,13 +2,14 @@ import { firebaseAuth, firebaseDb } from '@/services/firebase';
 
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
 } from '@react-native-firebase/auth';
-import { doc, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
+import { deleteDoc, doc, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
 
 import { sendPasswordReset, signIn, signOutUser, signUp, subscribeToAuthState } from './service';
 import type { AuthUser } from './types';
@@ -20,6 +21,7 @@ jest.mock('@/services/firebase', () => ({
 
 jest.mock('@react-native-firebase/auth', () => ({
   createUserWithEmailAndPassword: jest.fn(),
+  deleteUser: jest.fn(),
   onAuthStateChanged: jest.fn(),
   sendPasswordResetEmail: jest.fn(),
   signInWithEmailAndPassword: jest.fn(),
@@ -28,6 +30,7 @@ jest.mock('@react-native-firebase/auth', () => ({
 }));
 
 jest.mock('@react-native-firebase/firestore', () => ({
+  deleteDoc: jest.fn(),
   doc: jest.fn(),
   serverTimestamp: jest.fn(),
   setDoc: jest.fn(),
@@ -97,6 +100,53 @@ describe('signUp', () => {
     });
 
     expect(result).toEqual({ uid: 'u2', email: 'new@b.com', displayName: 'Grace Teacher' });
+  });
+
+  it('deletes the profile and auth user when the profile write fails, then rethrows', async () => {
+    const createdUser = { uid: 'u2', email: 'new@b.com', displayName: null };
+    asMock(createUserWithEmailAndPassword).mockResolvedValue({ user: createdUser });
+    asMock(updateProfile).mockResolvedValue(undefined);
+    const failure = { code: 'permission-denied' };
+    asMock(setDoc).mockRejectedValue(failure);
+    asMock(deleteDoc).mockResolvedValue(undefined);
+    asMock(deleteUser).mockResolvedValue(undefined);
+
+    await expect(signUp('Grace Teacher', 'new@b.com', 'secret1')).rejects.toBe(failure);
+
+    expect(deleteDoc).toHaveBeenCalledWith(mockDocRef);
+    expect(deleteUser).toHaveBeenCalledWith(createdUser);
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
+  it('compensates when updating the display name fails', async () => {
+    const createdUser = { uid: 'u2', email: 'new@b.com', displayName: null };
+    asMock(createUserWithEmailAndPassword).mockResolvedValue({ user: createdUser });
+    const failure = { code: 'auth/network-request-failed' };
+    asMock(updateProfile).mockRejectedValue(failure);
+    asMock(deleteDoc).mockResolvedValue(undefined);
+    asMock(deleteUser).mockResolvedValue(undefined);
+
+    await expect(signUp('Grace Teacher', 'new@b.com', 'secret1')).rejects.toBe(failure);
+
+    expect(setDoc).not.toHaveBeenCalled();
+    expect(deleteDoc).toHaveBeenCalledWith(mockDocRef);
+    expect(deleteUser).toHaveBeenCalledWith(createdUser);
+  });
+
+  it('falls back to signing out when deleting the created user fails', async () => {
+    const createdUser = { uid: 'u2', email: 'new@b.com', displayName: null };
+    asMock(createUserWithEmailAndPassword).mockResolvedValue({ user: createdUser });
+    asMock(updateProfile).mockResolvedValue(undefined);
+    const failure = { code: 'permission-denied' };
+    asMock(setDoc).mockRejectedValue(failure);
+    asMock(deleteDoc).mockResolvedValue(undefined);
+    asMock(deleteUser).mockRejectedValue({ code: 'auth/requires-recent-login' });
+    asMock(signOut).mockResolvedValue(undefined);
+
+    await expect(signUp('Grace Teacher', 'new@b.com', 'secret1')).rejects.toBe(failure);
+
+    expect(deleteUser).toHaveBeenCalledWith(createdUser);
+    expect(signOut).toHaveBeenCalledWith(mockAuthInstance);
   });
 });
 
