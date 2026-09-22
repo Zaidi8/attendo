@@ -2,13 +2,14 @@ import { firebaseAuth, firebaseDb } from '@/services/firebase';
 
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
 } from '@react-native-firebase/auth';
-import { doc, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
+import { deleteDoc, doc, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
 
 import type { AuthUser } from './types';
 
@@ -38,22 +39,38 @@ export async function signUp(
   password: string,
 ): Promise<AuthUser> {
   const credential = await createUserWithEmailAndPassword(firebaseAuth(), email, password);
-  await updateProfile(credential.user, { displayName: fullName });
+  const user = credential.user;
+  const profileRef = doc(firebaseDb(), 'users', user.uid);
 
-  const profileRef = doc(firebaseDb(), 'users', credential.user.uid);
-  await setDoc(
-    profileRef,
-    {
-      uid: credential.user.uid,
-      displayName: fullName,
-      email,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
+  try {
+    await updateProfile(user, { displayName: fullName });
 
-  return { uid: credential.user.uid, email, displayName: fullName };
+    await setDoc(
+      profileRef,
+      {
+        uid: user.uid,
+        displayName: fullName,
+        email,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+  } catch (error) {
+    try {
+      await deleteDoc(profileRef);
+    } catch {
+      // document was never written; nothing to clean up
+    }
+    try {
+      await deleteUser(user);
+    } catch {
+      await signOut(firebaseAuth());
+    }
+    throw error;
+  }
+
+  return { uid: user.uid, email, displayName: fullName };
 }
 
 /** Sign the current teacher out. */
