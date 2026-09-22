@@ -1,0 +1,21 @@
+name: Development Build (preview branch only)
+
+on:
+  push:
+    branches:
+      - preview
+
+jobs:
+  build_android:
+    name: Build Android (development)
+    type: build
+    params:
+      platform: android
+      profile: development
+
+  build_ios:
+    name: Build iOS (development)
+    type: build
+    params:
+      platform: ios
+      profile: development
