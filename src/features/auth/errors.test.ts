@@ -53,6 +53,18 @@ describe('mapAuthError', () => {
     );
   });
 
+  it('maps a cancelled Google sign-in to a messages', () => {
+    expect(mapAuthError(new Error('google/sign-in-cancelled'))).toBe(
+      AUTH_ERROR_MESSAGES.signInCancelled,
+    );
+  });
+
+  it('maps an unconfigured Google sign-in to a friendly message', () => {
+    expect(mapAuthError(new Error('google/not-configured: Google Sign-In is not configured.'))).toBe(
+      AUTH_ERROR_MESSAGES.googleNotConfigured,
+    );
+  });
+
   it('falls back to the generic message for an unknown code', () => {
     expect(mapAuthError({ code: 'auth/something-brand-new' })).toBe(AUTH_ERROR_MESSAGES.generic);
   });

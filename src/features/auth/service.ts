@@ -1,15 +1,20 @@
 import { firebaseAuth, firebaseDb } from '@/services/firebase';
 
 import {
+  GoogleAuthProvider,
   createUserWithEmailAndPassword,
   deleteUser,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
 } from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { deleteDoc, doc, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
+
+import { env } from '@/config/env';
 
 import type { AuthUser } from './types';
 
@@ -28,6 +33,36 @@ function toAuthUser(user: FirebaseUserLike): AuthUser {
  *  error so the caller (useAuth) can map it to a friendly message. */
 export async function signIn(email: string, password: string): Promise<AuthUser> {
   const credential = await signInWithEmailAndPassword(firebaseAuth(), email, password);
+  return toAuthUser(credential.user);
+}
+
+/** Sign in a teacher with Google. Requires the Google provider to be enabled in
+ *  the Firebase console and EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to be set; throws
+ *  a Google Sign-In error otherwise (mapped in useAuth/errors). Configure is
+ *  idempotent, so it runs on each call. */
+export function configureGoogleSignIn(): void {
+  if (!env.googleWebClientId) return;
+  GoogleSignin.configure({ webClientId: env.googleWebClientId });
+}
+
+export async function signInWithGoogle(): Promise<AuthUser> {
+  configureGoogleSignIn();
+  if (!env.googleWebClientId) {
+    throw new Error('google/not-configured: Google Sign-In is not configured.');
+  }
+
+  const signInResult = await GoogleSignin.signIn();
+  if (signInResult.type === 'cancelled') {
+    throw new Error('google/sign-in-cancelled');
+  }
+
+  const idToken = signInResult.data.idToken;
+  if (!idToken) {
+    throw new Error('google/no-id-token: Google did not return an ID token.');
+  }
+
+  const googleCredential = GoogleAuthProvider.credential(idToken);
+  const credential = await signInWithCredential(firebaseAuth(), googleCredential);
   return toAuthUser(credential.user);
 }
 

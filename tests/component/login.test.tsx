@@ -7,13 +7,15 @@ jest.mock('expo-router', () => ({
 }));
 
 const mockSignIn = jest.fn();
+const mockSignInWithGoogle = jest.fn();
 jest.mock('@/features/auth/useAuth', () => ({
-  useAuth: () => ({ signIn: mockSignIn }),
+  useAuth: () => ({ signIn: mockSignIn, signInWithGoogle: mockSignInWithGoogle }),
 }));
 
 describe('LoginScreen', () => {
   beforeEach(() => {
     mockSignIn.mockReset();
+    mockSignInWithGoogle.mockReset();
   });
 
   it('renders the login form fields and actions', async () => {
@@ -56,5 +58,27 @@ describe('LoginScreen', () => {
     expect(await screen.findByText('Email is required')).toBeOnTheScreen();
     expect(screen.getByText('Password is required')).toBeOnTheScreen();
     expect(mockSignIn).not.toHaveBeenCalled();
+  });
+
+  it('signs in with Google when the Google button is pressed', async () => {
+    mockSignInWithGoogle.mockResolvedValue(undefined);
+    await render(<LoginScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
+
+    expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces a friendly error banner when Google sign-in fails', async () => {
+    mockSignInWithGoogle.mockRejectedValue(
+      new Error('Google Sign-In is not set up yet. Please try again later.'),
+    );
+    await render(<LoginScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
+
+    expect(
+      await screen.findByText('Google Sign-In is not set up yet. Please try again later.'),
+    ).toBeOnTheScreen();
   });
 });

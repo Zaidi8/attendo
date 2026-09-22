@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from './useAuth';
 jest.mock('./service', () => ({
   subscribeToAuthState: jest.fn(),
   signIn: jest.fn(),
+  signInWithGoogle: jest.fn(),
   signUp: jest.fn(),
   signOutUser: jest.fn(),
   sendPasswordReset: jest.fn(),
@@ -76,6 +77,30 @@ describe('AuthProvider / useAuth', () => {
 
     await expect(result.current.signIn('a@b.com', 'x')).rejects.toThrow(
       AUTH_ERROR_MESSAGES.invalidCredentials,
+    );
+  });
+
+  it('delegates signInWithGoogle to the service', async () => {
+    captureAuthEmitter();
+    asMock(service.signInWithGoogle).mockResolvedValue({
+      uid: 'g1',
+      email: 'g@b.com',
+      displayName: 'Grace',
+    });
+    const { result } = await renderHook(() => useAuth(), { wrapper: Wrapper });
+
+    await result.current.signInWithGoogle();
+
+    expect(service.signInWithGoogle).toHaveBeenCalled();
+  });
+
+  it('throws a friendly message when Google sign-in fails', async () => {
+    captureAuthEmitter();
+    asMock(service.signInWithGoogle).mockRejectedValue({ code: 'google/not-configured' });
+    const { result } = await renderHook(() => useAuth(), { wrapper: Wrapper });
+
+    await expect(result.current.signInWithGoogle()).rejects.toThrow(
+      AUTH_ERROR_MESSAGES.googleNotConfigured,
     );
   });
 

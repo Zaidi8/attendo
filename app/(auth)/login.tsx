@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FormTextInput } from '@/components/ui/FormTextInput';
+import { GoogleSignInButton } from '@/components/ui/GoogleSignInButton';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useAuth } from '@/features/auth/useAuth';
@@ -17,7 +19,7 @@ import { loginSchema, type LoginFormValues } from '@/features/auth/validation';
  * creation. On success the authenticated navigation guard redirects to (app).
  */
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
   const {
     control,
@@ -29,6 +31,8 @@ export default function LoginScreen() {
     defaultValues: { email: '', password: '' },
   });
 
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+
   const onSubmit = async (values: LoginFormValues) => {
     try {
       await signIn(values.email, values.password);
@@ -36,6 +40,20 @@ export default function LoginScreen() {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Something went wrong.';
       setError('root', { message });
+    }
+  };
+
+  const onGoogleSignIn = async () => {
+    if (isGoogleSubmitting) return;
+    setError('root', { message: undefined });
+    setIsGoogleSubmitting(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Something went wrong.';
+      setError('root', { message });
+    } finally {
+      setIsGoogleSubmitting(false);
     }
   };
 
@@ -135,6 +153,20 @@ export default function LoginScreen() {
                   loading={isSubmitting}
                   onPress={handleSubmit(onSubmit)}
                   testID="login-submit"
+                />
+              </View>
+
+              <View className="flex-row items-center gap-3 pt-1">
+                <View className="h-px flex-1 bg-border" />
+                <Text className="text-caption text-muted">or</Text>
+                <View className="h-px flex-1 bg-border" />
+              </View>
+
+              <View className="pt-1">
+                <GoogleSignInButton
+                  loading={isGoogleSubmitting}
+                  onPress={onGoogleSignIn}
+                  testID="google-signin-button"
                 />
               </View>
             </View>
