@@ -1,0 +1,11 @@
+# Maestro smoke flow (E2E foundation).
+#
+# Launches the app and asserts the bootstrap screen renders. Requires an
+# installed Expo dev build on a simulator/emulator or device — this flow is
+# wired now and first executed against a real build in Sprint 1.
+#
+# Run: maestro test tests/e2e/smoke.yaml
+appId: com.attendo.app
+---
+- launchApp
+- assertVisible: 'Attendo'

@@ -1,0 +1,21 @@
+{
+  "_comment": "EXAMPLE ONLY — not the real config. Download the real google-services.json from the Firebase console (Project settings → your Android app) and place it at the project root as google-services.json (gitignored). Do not edit this example by hand.",
+  "project_info": {
+    "project_number": "REPLACE_WITH_PROJECT_NUMBER",
+    "project_id": "attendo-dev",
+    "storage_bucket": "attendo-dev.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "REPLACE_WITH_ANDROID_APP_ID",
+        "android_client_info": {
+          "package_name": "com.attendo.app"
+        }
+      },
+      "api_key": [{ "current_key": "REPLACE_WITH_ANDROID_API_KEY" }],
+      "services": {}
+    }
+  ],
+  "configuration_version": "1"
+}

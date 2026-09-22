@@ -7,8 +7,7 @@ node_modules/
 .expo/
 dist/
 web-build/
-expo-env.d.ts
-
+docs/
 # Native
 .kotlin/
 *.orig.*
@@ -31,7 +30,13 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+!.env.example
+
+# Firebase native config (project identifiers / client keys — keep out of git)
+google-services.json
+GoogleService-Info.plist
 
 # typescript
 *.tsbuildinfo
