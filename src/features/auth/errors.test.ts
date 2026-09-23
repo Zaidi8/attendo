@@ -65,6 +65,12 @@ describe('mapAuthError', () => {
     );
   });
 
+  it('maps unavailable Google Play Services to a recovery message', () => {
+    expect(mapAuthError(new Error('google/play-services-unavailable'))).toBe(
+      AUTH_ERROR_MESSAGES.playServicesUnavailable,
+    );
+  });
+
   it('falls back to the generic message for an unknown code', () => {
     expect(mapAuthError({ code: 'auth/something-brand-new' })).toBe(AUTH_ERROR_MESSAGES.generic);
   });

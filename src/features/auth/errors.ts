@@ -17,6 +17,8 @@ export const AUTH_ERROR_MESSAGES = {
   operationNotAllowed: 'Email and password sign-in is not enabled.',
   signInCancelled: 'Sign-in was cancelled. Please try again.',
   googleNotConfigured: 'Google Sign-In is not set up yet. Please try again later.',
+  playServicesUnavailable:
+    'Google Play Services is required to sign in with Google. Please update it and try again.',
   generic: 'Something went wrong. Please try again.',
 } as const;
 
@@ -33,6 +35,7 @@ const CODE_TO_MESSAGE: Record<string, string> = {
   'auth/operation-not-allowed': AUTH_ERROR_MESSAGES.operationNotAllowed,
   'google/sign-in-cancelled': AUTH_ERROR_MESSAGES.signInCancelled,
   'google/not-configured': AUTH_ERROR_MESSAGES.googleNotConfigured,
+  'google/play-services-unavailable': AUTH_ERROR_MESSAGES.playServicesUnavailable,
   'google/no-id-token': AUTH_ERROR_MESSAGES.generic,
 };
 

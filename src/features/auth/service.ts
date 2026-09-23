@@ -51,6 +51,15 @@ export async function signInWithGoogle(): Promise<AuthUser> {
     throw new Error('google/not-configured: Google Sign-In is not configured.');
   }
 
+  // Android requires an up-to-date Google Play Services install; the library
+  // shows its supported update dialog when showPlayServicesUpdateDialog is set.
+  const playServicesAvailable = await GoogleSignin.hasPlayServices({
+    showPlayServicesUpdateDialog: true,
+  });
+  if (!playServicesAvailable) {
+    throw new Error('google/play-services-unavailable');
+  }
+
   const signInResult = await GoogleSignin.signIn();
   if (signInResult.type === 'cancelled') {
     throw new Error('google/sign-in-cancelled');

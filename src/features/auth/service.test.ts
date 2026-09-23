@@ -52,6 +52,7 @@ jest.mock('@react-native-google-signin/google-signin', () => ({
   GoogleSignin: {
     configure: jest.fn(),
     signIn: jest.fn(),
+    signOut: jest.fn(),
     hasPlayServices: jest.fn(),
   },
 }));
@@ -107,6 +108,8 @@ describe('signInWithGoogle', () => {
     googleWebClientIdHolder.value = 'web-client-a';
     asMock(GoogleSignin.configure).mockClear();
     asMock(GoogleSignin.signIn).mockClear();
+    asMock(GoogleSignin.hasPlayServices).mockReset();
+    asMock(GoogleSignin.hasPlayServices).mockResolvedValue(true);
     asMock(signInWithCredential).mockClear();
     asMock(GoogleAuthProvider.credential).mockClear();
   });
@@ -114,6 +117,27 @@ describe('signInWithGoogle', () => {
   it('throws a friendly error when the web client id is not configured', async () => {
     googleWebClientIdHolder.value = '';
     await expect(signInWithGoogle()).rejects.toThrow('google/not-configured');
+    expect(GoogleSignin.hasPlayServices).not.toHaveBeenCalled();
+    expect(GoogleSignin.signIn).not.toHaveBeenCalled();
+  });
+
+  it('checks Play Services (with update dialog) before opening the sign-in flow', async () => {
+    asMock(GoogleSignin.signIn).mockResolvedValue({ type: 'cancelled' });
+
+    await expect(signInWithGoogle()).rejects.toThrow('google/sign-in-cancelled');
+
+    expect(GoogleSignin.hasPlayServices).toHaveBeenCalledWith({
+      showPlayServicesUpdateDialog: true,
+    });
+    expect(asMock(GoogleSignin.hasPlayServices).mock.invocationCallOrder[0]).toBeLessThan(
+      asMock(GoogleSignin.signIn).mock.invocationCallOrder[0],
+    );
+  });
+
+  it('throws a mapped error when Play Services are unavailable', async () => {
+    asMock(GoogleSignin.hasPlayServices).mockResolvedValue(false);
+
+    await expect(signInWithGoogle()).rejects.toThrow('google/play-services-unavailable');
     expect(GoogleSignin.signIn).not.toHaveBeenCalled();
   });
 
