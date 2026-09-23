@@ -117,8 +117,16 @@ export async function signUp(
   return { uid: user.uid, email, displayName: fullName };
 }
 
-/** Sign the current teacher out. */
+/** Sign the current teacher out of both Firebase and the native Google SDK, so
+ *  a later Google login shows the account chooser instead of reusing the
+ *  retained account (issue #6). Google cleanup is best-effort: Firebase
+ *  logout still runs when it fails. */
 export async function signOutUser(): Promise<void> {
+  try {
+    await GoogleSignin.signOut();
+  } catch {
+    // No native Google session to clear (e.g. signed in with email) — continue.
+  }
   await signOut(firebaseAuth());
 }
 

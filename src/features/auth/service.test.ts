@@ -251,9 +251,22 @@ describe('signUp', () => {
 });
 
 describe('signOutUser', () => {
-  it('signs out of the auth instance', async () => {
-    asMock(signOut).mockResolvedValue(undefined);
+  beforeEach(() => {
+    asMock(signOut).mockReset().mockResolvedValue(undefined);
+    asMock(GoogleSignin.signOut).mockReset().mockResolvedValue(undefined);
+  });
+
+  it('clears the native Google SDK session and the Firebase session', async () => {
     await signOutUser();
+    expect(GoogleSignin.signOut).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledWith(mockAuthInstance);
+  });
+
+  it('still signs out of Firebase when Google cleanup fails', async () => {
+    asMock(GoogleSignin.signOut).mockRejectedValue(new Error('no google session'));
+
+    await signOutUser();
+
     expect(signOut).toHaveBeenCalledWith(mockAuthInstance);
   });
 });
