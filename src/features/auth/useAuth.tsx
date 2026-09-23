@@ -4,6 +4,7 @@ import { mapAuthError } from './errors';
 import {
   sendPasswordReset as sendPasswordResetService,
   signIn as signInService,
+  signInWithGoogle as signInWithGoogleService,
   signOutUser as signOutService,
   signUp as signUpService,
   subscribeToAuthState,
@@ -16,6 +17,7 @@ export interface AuthContextValue {
   /** True until the first auth-state response resolves (hold navigation on splash). */
   initializing: boolean;
   signIn(email: string, password: string): Promise<void>;
+  signInWithGoogle(): Promise<void>;
   signUp(fullName: string, email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
   sendPasswordReset(email: string): Promise<void>;
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: state.user,
       initializing: state.initializing,
       signIn: (email, password) => withFriendlyError(() => signInService(email, password)),
+      signInWithGoogle: () => withFriendlyError(() => signInWithGoogleService()),
       signUp: (fullName, email, password) =>
         withFriendlyError(() => signUpService(fullName, email, password)),
       signOut: () => withFriendlyError(() => signOutService()),

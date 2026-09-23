@@ -15,6 +15,10 @@ export const AUTH_ERROR_MESSAGES = {
   tooManyRequests: 'Too many attempts. Please wait a moment and try again.',
   networkError: 'Network error. Please check your connection and try again.',
   operationNotAllowed: 'Email and password sign-in is not enabled.',
+  signInCancelled: 'Sign-in was cancelled. Please try again.',
+  googleNotConfigured: 'Google Sign-In is not set up yet. Please try again later.',
+  playServicesUnavailable:
+    'Google Play Services is required to sign in with Google. Please update it and try again.',
   generic: 'Something went wrong. Please try again.',
 } as const;
 
@@ -29,12 +33,24 @@ const CODE_TO_MESSAGE: Record<string, string> = {
   'auth/too-many-requests': AUTH_ERROR_MESSAGES.tooManyRequests,
   'auth/network-request-failed': AUTH_ERROR_MESSAGES.networkError,
   'auth/operation-not-allowed': AUTH_ERROR_MESSAGES.operationNotAllowed,
+  'google/sign-in-cancelled': AUTH_ERROR_MESSAGES.signInCancelled,
+  'google/not-configured': AUTH_ERROR_MESSAGES.googleNotConfigured,
+  'google/play-services-unavailable': AUTH_ERROR_MESSAGES.playServicesUnavailable,
+  'google/no-id-token': AUTH_ERROR_MESSAGES.generic,
 };
 
 function extractCode(error: unknown): string | undefined {
   if (typeof error === 'object' && error !== null && 'code' in error) {
     const { code } = error as { code: unknown };
-    return typeof code === 'string' ? code : undefined;
+    if (typeof code === 'string') return code;
+  }
+  // Service-thrown errors (Google flow) are plain Errors whose message embeds
+  // the code, e.g. "google/not-configured: ..." or just "google/sign-in-cancelled".
+  if (error instanceof Error) {
+    const prefixed = /^([\w./-]+):/.exec(error.message);
+    if (prefixed) return prefixed[1];
+    const bare = /^[\w./-]+$/.exec(error.message);
+    if (bare) return bare[0];
   }
   return undefined;
 }

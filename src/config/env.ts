@@ -23,6 +23,12 @@ export const env = {
   useFirebaseEmulator: readBoolean(process.env.EXPO_PUBLIC_USE_FIREBASE_EMULATOR, false),
   /** Host the emulators listen on (used only when useFirebaseEmulator is true). */
   firebaseEmulatorHost: readString(process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST, '127.0.0.1'),
+  /**
+   * Google OAuth Web Client ID used by Google Sign-In's `configure({ webClientId })`.
+   * Comes from Google Cloud Console (Credentials → OAuth client IDs → type Web);
+   * empty until the console is configured for Google auth.
+   */
+  googleWebClientId: readString(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID, ''),
 } as const;
 
 export const isDev = env.appEnv === 'dev';

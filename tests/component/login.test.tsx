@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import LoginScreen from '../../app/(auth)/login';
 
@@ -7,13 +7,15 @@ jest.mock('expo-router', () => ({
 }));
 
 const mockSignIn = jest.fn();
+const mockSignInWithGoogle = jest.fn();
 jest.mock('@/features/auth/useAuth', () => ({
-  useAuth: () => ({ signIn: mockSignIn }),
+  useAuth: () => ({ signIn: mockSignIn, signInWithGoogle: mockSignInWithGoogle }),
 }));
 
 describe('LoginScreen', () => {
   beforeEach(() => {
     mockSignIn.mockReset();
+    mockSignInWithGoogle.mockReset();
   });
 
   it('renders the login form fields and actions', async () => {
@@ -56,5 +58,54 @@ describe('LoginScreen', () => {
     expect(await screen.findByText('Email is required')).toBeOnTheScreen();
     expect(screen.getByText('Password is required')).toBeOnTheScreen();
     expect(mockSignIn).not.toHaveBeenCalled();
+  });
+
+  it('signs in with Google when the Google button is pressed', async () => {
+    mockSignInWithGoogle.mockResolvedValue(undefined);
+    await render(<LoginScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
+
+    expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces a friendly error banner when Google sign-in fails', async () => {
+    mockSignInWithGoogle.mockRejectedValue(
+      new Error('Google Sign-In is not set up yet. Please try again later.'),
+    );
+    await render(<LoginScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
+
+    expect(
+      await screen.findByText('Google Sign-In is not set up yet. Please try again later.'),
+    ).toBeOnTheScreen();
+  });
+
+  it('keeps the other login method blocked while one is pending', async () => {
+    let resolveGoogle: (() => void) | undefined;
+    mockSignInWithGoogle.mockImplementation(
+      () => new Promise<void>((resolve) => (resolveGoogle = resolve)),
+    );
+    await render(<LoginScreen />);
+
+    // Start Google sign-in and keep it pending. We invoke the host onClick
+    // directly because fireEvent.press awaits the handler's promise, which we
+    // deliberately leave unresolved until the end of the test.
+    const googleButton = screen.getByRole('button', { name: 'Continue with Google' });
+    await act(async () => {
+      googleButton.props.onClick();
+    });
+    expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1);
+
+    // While Google sign-in is pending, the Log In button is disabled and
+    // pressing it cannot start the email flow.
+    expect(screen.getByRole('button', { name: 'Log In' })).toBeDisabled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Log In' }));
+    expect(mockSignIn).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveGoogle?.();
+    });
   });
 });

@@ -1,17 +1,27 @@
 import { firebaseAuth, firebaseDb } from '@/services/firebase';
 
 import {
+  GoogleAuthProvider,
   createUserWithEmailAndPassword,
   deleteUser,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
 } from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { deleteDoc, doc, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
 
-import { sendPasswordReset, signIn, signOutUser, signUp, subscribeToAuthState } from './service';
+import {
+  sendPasswordReset,
+  signIn,
+  signInWithGoogle,
+  signOutUser,
+  signUp,
+  subscribeToAuthState,
+} from './service';
 import type { AuthUser } from './types';
 
 jest.mock('@/services/firebase', () => ({
@@ -20,10 +30,12 @@ jest.mock('@/services/firebase', () => ({
 }));
 
 jest.mock('@react-native-firebase/auth', () => ({
+  GoogleAuthProvider: { credential: jest.fn() },
   createUserWithEmailAndPassword: jest.fn(),
   deleteUser: jest.fn(),
   onAuthStateChanged: jest.fn(),
   sendPasswordResetEmail: jest.fn(),
+  signInWithCredential: jest.fn(),
   signInWithEmailAndPassword: jest.fn(),
   signOut: jest.fn(),
   updateProfile: jest.fn(),
@@ -34,6 +46,24 @@ jest.mock('@react-native-firebase/firestore', () => ({
   doc: jest.fn(),
   serverTimestamp: jest.fn(),
   setDoc: jest.fn(),
+}));
+
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+    hasPlayServices: jest.fn(),
+  },
+}));
+
+const googleWebClientIdHolder: { value: string } = { value: '' };
+jest.mock('@/config/env', () => ({
+  env: {
+    get googleWebClientId() {
+      return googleWebClientIdHolder.value;
+    },
+  },
 }));
 
 const asMock = (fn: unknown): jest.Mock => fn as jest.Mock;
@@ -70,6 +100,76 @@ describe('signIn', () => {
     const failure = { code: 'auth/invalid-credential' };
     asMock(signInWithEmailAndPassword).mockRejectedValue(failure);
     await expect(signIn('a@b.com', 'x')).rejects.toBe(failure);
+  });
+});
+
+describe('signInWithGoogle', () => {
+  beforeEach(() => {
+    googleWebClientIdHolder.value = 'web-client-a';
+    asMock(GoogleSignin.configure).mockClear();
+    asMock(GoogleSignin.signIn).mockClear();
+    asMock(GoogleSignin.hasPlayServices).mockReset();
+    asMock(GoogleSignin.hasPlayServices).mockResolvedValue(true);
+    asMock(signInWithCredential).mockClear();
+    asMock(GoogleAuthProvider.credential).mockClear();
+  });
+
+  it('throws a friendly error when the web client id is not configured', async () => {
+    googleWebClientIdHolder.value = '';
+    await expect(signInWithGoogle()).rejects.toThrow('google/not-configured');
+    expect(GoogleSignin.hasPlayServices).not.toHaveBeenCalled();
+    expect(GoogleSignin.signIn).not.toHaveBeenCalled();
+  });
+
+  it('checks Play Services (with update dialog) before opening the sign-in flow', async () => {
+    asMock(GoogleSignin.signIn).mockResolvedValue({ type: 'cancelled' });
+
+    await expect(signInWithGoogle()).rejects.toThrow('google/sign-in-cancelled');
+
+    expect(GoogleSignin.hasPlayServices).toHaveBeenCalledWith({
+      showPlayServicesUpdateDialog: true,
+    });
+    expect(asMock(GoogleSignin.hasPlayServices).mock.invocationCallOrder[0]).toBeLessThan(
+      asMock(GoogleSignin.signIn).mock.invocationCallOrder[0],
+    );
+  });
+
+  it('throws a mapped error when Play Services are unavailable', async () => {
+    asMock(GoogleSignin.hasPlayServices).mockResolvedValue(false);
+
+    await expect(signInWithGoogle()).rejects.toThrow('google/play-services-unavailable');
+    expect(GoogleSignin.signIn).not.toHaveBeenCalled();
+  });
+
+  it('maps a cancelled Google dialog to a sign-in-cancelled error', async () => {
+    asMock(GoogleSignin.signIn).mockResolvedValue({ type: 'cancelled' });
+
+    await expect(signInWithGoogle()).rejects.toThrow('google/sign-in-cancelled');
+    expect(signInWithCredential).not.toHaveBeenCalled();
+  });
+
+  it('exchanges the Google ID token for a Firebase credential and maps the user', async () => {
+    asMock(GoogleSignin.signIn).mockResolvedValue({
+      type: 'success',
+      data: { user: { id: 'g1' }, idToken: 'gt-123', scopes: [] },
+    });
+    asMock(GoogleAuthProvider.credential).mockReturnValue({
+      providerId: 'google.com',
+      token: 'gt-123',
+    } as never);
+    asMock(signInWithCredential).mockResolvedValue({
+      user: { uid: 'g1', email: 'g@b.com', displayName: 'Grace' },
+    } as never);
+
+    const user = await signInWithGoogle();
+
+    expect(GoogleSignin.configure).toHaveBeenCalledWith({ webClientId: 'web-client-a' });
+    expect(GoogleAuthProvider.credential).toHaveBeenCalledWith('gt-123');
+    expect(signInWithCredential).toHaveBeenCalledWith(mockAuthInstance, {
+      providerId: 'google.com',
+      token: 'gt-123',
+    });
+    expect(user).toEqual({ uid: 'g1', email: 'g@b.com', displayName: 'Grace' });
   });
 });
 
@@ -151,9 +251,22 @@ describe('signUp', () => {
 });
 
 describe('signOutUser', () => {
-  it('signs out of the auth instance', async () => {
-    asMock(signOut).mockResolvedValue(undefined);
+  beforeEach(() => {
+    asMock(signOut).mockReset().mockResolvedValue(undefined);
+    asMock(GoogleSignin.signOut).mockReset().mockResolvedValue(undefined);
+  });
+
+  it('clears the native Google SDK session and the Firebase session', async () => {
     await signOutUser();
+    expect(GoogleSignin.signOut).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledWith(mockAuthInstance);
+  });
+
+  it('still signs out of Firebase when Google cleanup fails', async () => {
+    asMock(GoogleSignin.signOut).mockRejectedValue(new Error('no google session'));
+
+    await signOutUser();
+
     expect(signOut).toHaveBeenCalledWith(mockAuthInstance);
   });
 });

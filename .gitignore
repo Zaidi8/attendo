@@ -46,3 +46,6 @@ example
 # generated native folders
 /ios
 /android
+
+# opencode tool state (session history, never part of the product)
+.opencode/

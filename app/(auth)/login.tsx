@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FormTextInput } from '@/components/ui/FormTextInput';
+import { GoogleSignInButton } from '@/components/ui/GoogleSignInButton';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useAuth } from '@/features/auth/useAuth';
@@ -17,25 +19,47 @@ import { loginSchema, type LoginFormValues } from '@/features/auth/validation';
  * creation. On success the authenticated navigation guard redirects to (app).
  */
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
   const {
     control,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
+  // One shared guard for both login methods so email and Google sign-in can
+  // never run concurrently (whichever finished last would win the session).
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
+
   const onSubmit = async (values: LoginFormValues) => {
+    if (isAuthSubmitting) return;
+    setIsAuthSubmitting(true);
     try {
       await signIn(values.email, values.password);
       // Navigation to the authenticated area happens reactively via the guard.
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Something went wrong.';
       setError('root', { message });
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const onGoogleSignIn = async () => {
+    if (isAuthSubmitting) return;
+    setError('root', { message: undefined });
+    setIsAuthSubmitting(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Something went wrong.';
+      setError('root', { message });
+    } finally {
+      setIsAuthSubmitting(false);
     }
   };
 
@@ -132,9 +156,23 @@ export default function LoginScreen() {
               <View className="pt-1">
                 <PrimaryButton
                   label="Log In"
-                  loading={isSubmitting}
+                  loading={isAuthSubmitting}
                   onPress={handleSubmit(onSubmit)}
                   testID="login-submit"
+                />
+              </View>
+
+              <View className="flex-row items-center gap-3 pt-1">
+                <View className="h-px flex-1 bg-border" />
+                <Text className="text-caption text-muted">or</Text>
+                <View className="h-px flex-1 bg-border" />
+              </View>
+
+              <View className="pt-1">
+                <GoogleSignInButton
+                  loading={isAuthSubmitting}
+                  onPress={onGoogleSignIn}
+                  testID="google-signin-button"
                 />
               </View>
             </View>
