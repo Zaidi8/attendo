@@ -25,35 +25,41 @@ export default function LoginScreen() {
     control,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
-  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+  // One shared guard for both login methods so email and Google sign-in can
+  // never run concurrently (whichever finished last would win the session).
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
 
   const onSubmit = async (values: LoginFormValues) => {
+    if (isAuthSubmitting) return;
+    setIsAuthSubmitting(true);
     try {
       await signIn(values.email, values.password);
       // Navigation to the authenticated area happens reactively via the guard.
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Something went wrong.';
       setError('root', { message });
+    } finally {
+      setIsAuthSubmitting(false);
     }
   };
 
   const onGoogleSignIn = async () => {
-    if (isGoogleSubmitting) return;
+    if (isAuthSubmitting) return;
     setError('root', { message: undefined });
-    setIsGoogleSubmitting(true);
+    setIsAuthSubmitting(true);
     try {
       await signInWithGoogle();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Something went wrong.';
       setError('root', { message });
     } finally {
-      setIsGoogleSubmitting(false);
+      setIsAuthSubmitting(false);
     }
   };
 
@@ -150,7 +156,7 @@ export default function LoginScreen() {
               <View className="pt-1">
                 <PrimaryButton
                   label="Log In"
-                  loading={isSubmitting}
+                  loading={isAuthSubmitting}
                   onPress={handleSubmit(onSubmit)}
                   testID="login-submit"
                 />
@@ -164,7 +170,7 @@ export default function LoginScreen() {
 
               <View className="pt-1">
                 <GoogleSignInButton
-                  loading={isGoogleSubmitting}
+                  loading={isAuthSubmitting}
                   onPress={onGoogleSignIn}
                   testID="google-signin-button"
                 />
